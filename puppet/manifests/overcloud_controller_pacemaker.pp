@@ -560,6 +560,10 @@ MYSQL_HOST=localhost\n",
     manage_service => false,
     enabled        => false,
   }
+  #class { '::cinder::backup' :
+  #  manage_service => false,
+  #  enabled        => false,
+  #}  
   include ::cinder::glance
   include ::cinder::ceilometer
   class { '::cinder::setup_test_volume':
@@ -979,6 +983,7 @@ password=\"${mysql_root_password}\"",
       clone_params => 'interleave=true',
     }
     pacemaker::resource::service { $::cinder::params::volume_service : }
+    pacemaker::resource::service { $::cinder::params::backup_service : }
 
     pacemaker::constraint::base { 'keystone-then-cinder-api-constraint':
       constraint_type => 'order',
@@ -1020,6 +1025,22 @@ password=\"${mysql_root_password}\"",
       score   => 'INFINITY',
       require => [Pacemaker::Resource::Service[$::cinder::params::scheduler_service],
                   Pacemaker::Resource::Service[$::cinder::params::volume_service]],
+    }
+    pacemaker::constraint::base { 'cinder-volume-then-cinder-backup-constraint':
+      constraint_type => 'order',
+      first_resource  => $::cinder::params::volume_service,
+      second_resource => $::cinder::params::backup_service,
+      first_action    => 'start',
+      second_action   => 'start',
+      require         => [Pacemaker::Resource::Service[$::cinder::params::volume_service],
+                          Pacemaker::Resource::Service[$::cinder::params::backup_service]],
+    }
+    pacemaker::constraint::colocation { 'cinder-backup-with-cinder-volume-colocation':
+      source  => $::cinder::params::backup_service,
+      target  => $::cinder::params::volume_service,
+      score   => 'INFINITY',
+      require => [Pacemaker::Resource::Service[$::cinder::params::volume_service],
+                  Pacemaker::Resource::Service[$::cinder::params::backup_service]],
     }
 
     # Sahara

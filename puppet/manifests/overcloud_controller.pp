@@ -321,6 +321,7 @@ if hiera('step') >= 4 {
   include ::cinder::glance
   include ::cinder::scheduler
   include ::cinder::volume
+  include ::cinder::backup
   include ::cinder::ceilometer
   class { '::cinder::setup_test_volume':
     size => join([hiera('cinder_lvm_loop_device_size'), 'M']),
