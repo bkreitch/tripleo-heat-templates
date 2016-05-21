@@ -590,6 +590,7 @@ MYSQL_HOST=localhost\n",
     }
 
     $cinder_pool_requires = [Ceph::Pool[hiera('cinder_rbd_pool_name')]]
+    include ::cinder::backup::ceph
 
   } else {
     $cinder_pool_requires = []
